@@ -1,0 +1,61 @@
+TITLE 'Programmable Combination Lock'
+
+[C0..C5] pin; "programmed bit sequence
+!X0, !X0_N, !X1, !X1_N pin;  "combination data input"
+R pin;      "relock input"
+RESET pin;  "asynchronous reset"
+CLOCK pin;
+Q2, Q1, Q0 pin istype 'reg';
+!LOCKED   pin istype 'com';  "LOCKED indicator"
+!UNLOCKED pin istype 'com';  "UNLOCKED indicator"
+!ALARM    pin istype 'com';  "ALARM indicator"
+BSQ0, BSQ1, M pin istype 'com'; "bounceless switch
+
+QALL = [Q2,Q1,Q0];
+A0   = [ 0, 0, 0];
+A1   = [ 0, 0, 1];
+A2   = [ 0, 1, 0];
+A3   = [ 0, 1, 1];
+A4   = [ 1, 0, 0];
+A5   = [ 1, 0, 1];
+A6   = [ 1, 1, 0];
+A7   = [ 1, 1, 1];
+
+STATE_DIAGRAM QALL
+state A0: if (R==1) then A0 
+	      else if (R==0)&(M==!C0) then A7
+	      else if (R==0)&(M==C0) then A1;
+state A1: if (R==1) then A0 
+	      else if (R==0)&(M==C1) then A2
+	      else if (R==0)&(M==!C1) then A7;
+state A2: if (R==1) then A0 
+	      else if (R==0)&(M==!C2) then A7
+	      else if (R==0)&(M==C2) then A3;
+state A3: if (R==1) then A0 
+	      else if (R==0)&(M==!C3) then A7
+	      else if (R==0)&(M==C3) then A4;
+state A4: if (R==1) then A0 
+	      else if (R==0)&(M==!C4) then A7
+	      else if (R==0)&(M==C4) then A5;
+state A5: if (R==1) then A0 
+	      else if (R==0)&(M==C5) then A6
+	      else if (R==0)&(M==!C5) then A7;
+state A6: if (R==1) then A0
+	      else if (R==0) then A6;
+state A7: goto A7; 
+
+EQUATIONS
+QALL.CLK = CLOCK;
+QALL.AR = RESET;
+
+LOCKED = !Q2&!Q1&!Q0;
+UNLOCKED = Q2&Q1&!Q0;
+ALARM = Q2&Q1&Q0;
+
+BSQ0 = X0 # !X0_N & BSQ0;
+BSQ1 = X1 # !X1_N & BSQ1;
+
+TRUTH_TABLE([BSQ0,BSQ1]->[M])
+[0,1]->[1];
+[1,0]->[0];
+END
